@@ -50,45 +50,56 @@ window.addEventListener('load', () => {
 // Oturum kontrolü
 async function checkAuth() {
     try {
-        console.log('Auth kontrolü başlatılıyor...');
+        console.log('🔐 Auth kontrolü başlatılıyor...');
+        console.log('📍 Current URL:', window.location.href);
+        console.log('📍 Current pathname:', window.location.pathname);
+        
         const response = await fetch('/auth/me', {
             method: 'GET',
-            credentials: 'include', // Cookie'leri gönder
+            credentials: 'include', // Cookie'leri gönder - ÖNEMLİ!
             headers: {
                 'Content-Type': 'application/json'
             }
         });
         
-        console.log('Auth response status:', response.status);
+        console.log('📡 Auth response status:', response.status);
+        console.log('📡 Response headers:', [...response.headers.entries()]);
         
         if (response.ok) {
             currentUser = await response.json();
-            console.log('Kullanıcı bilgileri alındı:', currentUser);
+            console.log('✅ Kullanıcı bilgileri alındı:', currentUser);
             
             // Ana ekranı göster
             showMainScreen();
             
-            // URL dashboard değilse güncelle
-            if (window.location.pathname !== '/dashboard') {
-                window.history.pushState({}, '', '/dashboard');
+            // URL'yi güncelle (eğer gerekirse)
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/dashboard' && currentPath !== '/') {
+                window.history.replaceState({}, '', '/dashboard');
             }
         } else {
-            console.log('Giriş yapılmamış, login ekranına yönlendiriliyor...');
+            const errorData = await response.json().catch(() => ({}));
+            console.log('❌ Giriş yapılmamış:', errorData);
+            console.log('📍 Login ekranı gösteriliyor...');
+            
             // Giriş yapılmamışsa login ekranını göster
             showLoginScreen();
             
-            // Eğer dashboard'taysa ana sayfaya yönlendir
-            if (window.location.pathname === '/dashboard') {
-                window.history.pushState({}, '', '/');
+            // Eğer dashboard'taysa URL'yi ana sayfaya değiştir (ama sayfayı yenileme)
+            const currentPath = window.location.pathname;
+            if (currentPath === '/dashboard') {
+                // URL'yi değiştir ama sayfayı yenileme (SPA mantığı)
+                window.history.replaceState({}, '', '/');
             }
         }
     } catch (error) {
-        console.error('Auth kontrolü hatası:', error);
+        console.error('❌ Auth kontrolü hatası:', error);
         showLoginScreen();
         
-        // Eğer dashboard'taysa ana sayfaya yönlendir
-        if (window.location.pathname === '/dashboard') {
-            window.history.pushState({}, '', '/');
+        // Eğer dashboard'taysa URL'yi ana sayfaya değiştir
+        const currentPath = window.location.pathname;
+        if (currentPath === '/dashboard') {
+            window.history.replaceState({}, '', '/');
         }
     }
 }
@@ -204,28 +215,48 @@ function setupEventListeners() {
 
 // Ekranları göster/gizle
 function showLoginScreen() {
-    document.getElementById('login-screen').classList.add('active');
-    document.getElementById('main-screen').classList.remove('active');
+    console.log('Login ekranı gösteriliyor');
+    const loginScreen = document.getElementById('login-screen');
+    const mainScreen = document.getElementById('main-screen');
+    
+    if (loginScreen) loginScreen.classList.add('active');
+    if (mainScreen) mainScreen.classList.remove('active');
 }
 
 function showMainScreen() {
-    document.getElementById('login-screen').classList.remove('active');
-    document.getElementById('main-screen').classList.add('active');
+    console.log('Ana ekran gösteriliyor');
+    const loginScreen = document.getElementById('login-screen');
+    const mainScreen = document.getElementById('main-screen');
+    
+    if (loginScreen) loginScreen.classList.remove('active');
+    if (mainScreen) mainScreen.classList.add('active');
     
     if (currentUser) {
         const userName = currentUser.display_name || 'Kullanıcı';
-        document.getElementById('user-name').textContent = userName;
-        document.getElementById('welcome-user-name').textContent = userName;
-        document.getElementById('user-avatar').src = currentUser.avatar_url || '';
-        document.getElementById('user-avatar').alt = userName;
+        const userNameEl = document.getElementById('user-name');
+        const welcomeUserNameEl = document.getElementById('welcome-user-name');
+        const userAvatarEl = document.getElementById('user-avatar');
+        
+        if (userNameEl) userNameEl.textContent = userName;
+        if (welcomeUserNameEl) welcomeUserNameEl.textContent = userName;
+        if (userAvatarEl) {
+            userAvatarEl.src = currentUser.avatar_url || '';
+            userAvatarEl.alt = userName;
+        }
         
         // Kullanıcı rolünü göster (varsayılan olarak guest, sonra güncellenecek)
         updateUserRoleBadge('guest');
     }
     
     // URL'ye göre view'ı ayarla
-    if (window.location.pathname === '/dashboard') {
-        switchView('home');
+    const pathname = window.location.pathname;
+    console.log('Current pathname:', pathname);
+    
+    if (pathname === '/dashboard' || pathname === '/') {
+        // Eğer oda içindeyse room view'ı göster, değilse home
+        if (!currentRoom) {
+            switchView('home');
+        }
     }
 }
 

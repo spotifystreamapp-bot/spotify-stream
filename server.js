@@ -43,7 +43,8 @@ app.use(session({
     secure: isProduction, // Production'da HTTPS için true
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 saat
-    sameSite: isProduction ? 'lax' : 'lax' // Render.com için 'lax' yeterli
+    sameSite: isProduction ? 'none' : 'lax', // Render.com için 'none' gerekli (cross-site)
+    domain: undefined // Render.com domain'i için undefined bırak
   },
   name: 'spotify-stream-session' // Session cookie adı
 }));
@@ -61,19 +62,35 @@ app.use('/api/spotify', spotifyRoutes);
 
 // Ana sayfa - giriş kontrolü
 app.get('/', (req, res) => {
+  console.log('🏠 Ana sayfa route çağrıldı');
+  console.log('🏠 Session ID:', req.sessionID);
+  console.log('🏠 Session userId:', req.session.userId);
+  
   // Eğer giriş yapılmışsa dashboard'a yönlendir
   if (req.session.userId) {
+    console.log('✅ Giriş yapılmış, dashboard\'a yönlendiriliyor');
     return res.redirect('/dashboard');
   }
+  
+  console.log('⚠️ Giriş yapılmamış, login sayfası gönderiliyor');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Dashboard - giriş yapılmış kullanıcılar için
 app.get('/dashboard', (req, res) => {
+  console.log('📊 Dashboard route çağrıldı');
+  console.log('📊 Session ID:', req.sessionID);
+  console.log('📊 Session userId:', req.session.userId);
+  console.log('📊 Session exists:', !!req.session);
+  console.log('📊 Cookies:', req.headers.cookie);
+  
   // Giriş yapılmamışsa ana sayfaya yönlendir
   if (!req.session.userId) {
+    console.log('⚠️ Session userId yok, ana sayfaya yönlendiriliyor');
     return res.redirect('/');
   }
+  
+  console.log('✅ Session var, dashboard HTML gönderiliyor');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
