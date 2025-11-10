@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Stream - Paylaşımlı Dinleme</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Giriş Ekranı -->
+    <div id="login-screen" class="screen active">
+        <div class="login-container">
+            <div class="logo">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="#1DB954">
+                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+                </svg>
+                <h1>Spotify Stream</h1>
+                <p class="subtitle">Gerçek zamanlı paylaşımlı dinleme deneyimi</p>
+            </div>
+            <button id="spotify-login-btn" type="button" class="spotify-btn" onclick="handleSpotifyLoginClick(event)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+                </svg>
+                Spotify ile Giriş Yap
+            </button>
+            <p class="info-text">Spotify hesabınızla giriş yaparak devam edin</p>
+        </div>
+    </div>
+
+    <!-- Ana Ekran -->
+    <div id="main-screen" class="screen">
+        <div class="sidebar">
+            <div class="user-info">
+                <img id="user-avatar" src="" alt="Avatar" class="avatar">
+                <div class="user-details">
+                    <span id="user-name">Kullanıcı</span>
+                    <button id="logout-btn" class="logout-btn">Çıkış</button>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" data-view="create-room">
+                    <span>🏠</span> Oda Oluştur
+                </button>
+                <button class="nav-item" data-view="join-room">
+                    <span>🔑</span> Koda Gir
+                </button>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- Oda Oluştur -->
+            <div id="create-room-view" class="view active">
+                <div class="view-header">
+                    <h2>Yeni Oda Oluştur</h2>
+                </div>
+                <div class="form-container">
+                    <input type="text" id="room-name-input" placeholder="Oda Adı (Opsiyonel)" class="input">
+                    <button id="create-room-btn" class="primary-btn">Oda Oluştur</button>
+                </div>
+                <div id="room-created" class="room-info hidden">
+                    <h3>Odanız Hazır!</h3>
+                    <div class="room-code-display">
+                        <p class="code-label">Oda Kodu:</p>
+                        <p id="room-code" class="code-value"></p>
+                    </div>
+                    <div class="qr-container">
+                        <p class="qr-label">QR Kod:</p>
+                        <img id="qr-code-img" src="" alt="QR Code" class="qr-code">
+                    </div>
+                    <button id="start-playing-btn" class="primary-btn">Şarkı Çalmaya Başla</button>
+                </div>
+            </div>
+
+            <!-- Koda Gir -->
+            <div id="join-room-view" class="view">
+                <div class="view-header">
+                    <h2>Koda Gir</h2>
+                </div>
+                <div class="form-container">
+                    <input type="text" id="room-code-input" placeholder="6 Haneli Kod" maxlength="6" class="input code-input">
+                    <button id="join-room-btn" class="primary-btn">Odaya Katıl</button>
+                </div>
+                <div id="join-status" class="status-message hidden"></div>
+            </div>
+
+            <!-- Oda Ekranı -->
+            <div id="room-view" class="view">
+                <div class="room-header">
+                    <h2 id="current-room-name">Oda</h2>
+                    <div class="room-actions">
+                        <button id="leave-room-btn" class="secondary-btn">Odadan Çık</button>
+                    </div>
+                </div>
+
+                <!-- Bekleme Listesi (Sadece Admin/Owner) -->
+                <div id="pending-users-section" class="section hidden">
+                    <h3>Bekleme Listesi</h3>
+                    <div id="pending-users-list" class="user-list"></div>
+                </div>
+
+                <!-- Aktif Kullanıcılar -->
+                <div class="section">
+                    <h3>Aktif Kullanıcılar</h3>
+                    <div id="active-users-list" class="user-list"></div>
+                </div>
+
+                <!-- Şarkı Sırası -->
+                <div class="section">
+                    <h3>Şarkı Sırası</h3>
+                    <div id="queue-list" class="queue-list"></div>
+                </div>
+
+                <!-- Şarkı Arama (Sadece Aktif Üyeler) -->
+                <div id="search-section" class="section hidden">
+                    <h3>Şarkı Ekle</h3>
+                    <input type="text" id="track-search-input" placeholder="Şarkı, sanatçı veya albüm ara..." class="input search-input">
+                    <div id="search-results" class="search-results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+

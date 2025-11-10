@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: spotify-stream
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Aşağıdaki değerleri Render Dashboard'dan ekleyeceksiniz:
+      # SPOTIFY_CLIENT_ID
+      # SPOTIFY_CLIENT_SECRET
+      # SPOTIFY_REDIRECT_URI (Render otomatik URL: https://your-app.onrender.com/auth/spotify/callback)
+      # SESSION_SECRET
+      # EMAIL_HOST
+      # EMAIL_PORT
+      # EMAIL_USER
+      # EMAIL_PASS
+      # EMAIL_FROM
+
