@@ -31,18 +31,18 @@ body {
     min-height: 100vh;
 }
 
-.screen.active {
-    display: block;
-}
-
 /* Giriş Ekranı */
 #login-screen {
-    display: flex;
+    display: none; /* Varsayılan olarak gizli, JavaScript aktif edecek */
     align-items: center;
     justify-content: center;
     padding: 20px;
     background: linear-gradient(135deg, #1DB954 0%, #1ed760 50%, #121212 100%);
     min-height: 100vh;
+}
+
+#login-screen.active {
+    display: flex !important;
 }
 
 .login-container {
@@ -124,9 +124,13 @@ body {
 
 /* Ana Ekran */
 #main-screen {
-    display: flex;
+    display: none; /* Varsayılan olarak gizli, JavaScript aktif edecek */
     min-height: 100vh;
     background: var(--spotify-dark);
+}
+
+#main-screen.active {
+    display: flex !important;
 }
 
 /* Sidebar */

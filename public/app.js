@@ -32,19 +32,25 @@ window.handleSpotifyLoginClick = function(e) {
 
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Sayfa yüklendi, event listenerlar kuruluyor...');
-    console.log('Current pathname:', window.location.pathname);
-    setupEventListeners();
-    await checkAuth();
-});
-
-// Sayfa yüklendiğinde URL'yi kontrol et
-window.addEventListener('load', () => {
-    console.log('Page loaded, checking URL...');
-    const pathname = window.location.pathname;
-    if (pathname === '/dashboard') {
-        checkAuth();
+    console.log('📄 Sayfa yüklendi, event listenerlar kuruluyor...');
+    console.log('📍 Current pathname:', window.location.pathname);
+    
+    // Önce varsayılan olarak login ekranını göster (auth kontrolü yapılana kadar)
+    const loginScreen = document.getElementById('login-screen');
+    const mainScreen = document.getElementById('main-screen');
+    
+    if (loginScreen && mainScreen) {
+        // Varsayılan olarak login ekranını göster
+        loginScreen.classList.add('active');
+        mainScreen.classList.remove('active');
+        console.log('🔵 Varsayılan olarak login ekranı gösteriliyor');
     }
+    
+    // Event listener'ları kur
+    setupEventListeners();
+    
+    // Auth kontrolü yap
+    await checkAuth();
 });
 
 // Oturum kontrolü
@@ -215,33 +221,88 @@ function setupEventListeners() {
 
 // Ekranları göster/gizle
 function showLoginScreen() {
-    console.log('Login ekranı gösteriliyor');
+    console.log('🔵 Login ekranı gösteriliyor');
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     
-    if (loginScreen) loginScreen.classList.add('active');
-    if (mainScreen) mainScreen.classList.remove('active');
+    console.log('🔵 Login screen element:', loginScreen);
+    console.log('🔵 Main screen element:', mainScreen);
+    
+    if (loginScreen) {
+        loginScreen.classList.add('active');
+        console.log('✅ Login screen active class eklendi');
+    } else {
+        console.error('❌ Login screen elementi bulunamadı!');
+    }
+    
+    if (mainScreen) {
+        mainScreen.classList.remove('active');
+        console.log('✅ Main screen active class kaldırıldı');
+    } else {
+        console.error('❌ Main screen elementi bulunamadı!');
+    }
 }
 
 function showMainScreen() {
-    console.log('Ana ekran gösteriliyor');
+    console.log('🟢 Ana ekran gösteriliyor');
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     
-    if (loginScreen) loginScreen.classList.remove('active');
-    if (mainScreen) mainScreen.classList.add('active');
+    console.log('🟢 Login screen element:', loginScreen);
+    console.log('🟢 Main screen element:', mainScreen);
     
+    if (!loginScreen || !mainScreen) {
+        console.error('❌ Ekran elementleri bulunamadı!', {
+            loginScreen: !!loginScreen,
+            mainScreen: !!mainScreen
+        });
+        // Elementler henüz yüklenmemişse, kısa bir süre bekle ve tekrar dene
+        setTimeout(() => {
+            console.log('🔄 Ekranları tekrar göster/gizle deneniyor...');
+            showMainScreen();
+        }, 100);
+        return;
+    }
+    
+    // Login ekranını gizle
+    loginScreen.classList.remove('active');
+    console.log('✅ Login screen active class kaldırıldı');
+    console.log('✅ Login screen classes:', loginScreen.className);
+    
+    // Main ekranı göster
+    mainScreen.classList.add('active');
+    console.log('✅ Main screen active class eklendi');
+    console.log('✅ Main screen classes:', mainScreen.className);
+    
+    // Kullanıcı bilgilerini güncelle
     if (currentUser) {
         const userName = currentUser.display_name || 'Kullanıcı';
         const userNameEl = document.getElementById('user-name');
         const welcomeUserNameEl = document.getElementById('welcome-user-name');
         const userAvatarEl = document.getElementById('user-avatar');
         
-        if (userNameEl) userNameEl.textContent = userName;
-        if (welcomeUserNameEl) welcomeUserNameEl.textContent = userName;
+        console.log('👤 Kullanıcı bilgileri güncelleniyor:', userName);
+        
+        if (userNameEl) {
+            userNameEl.textContent = userName;
+            console.log('✅ User name güncellendi');
+        } else {
+            console.warn('⚠️ User name elementi bulunamadı');
+        }
+        
+        if (welcomeUserNameEl) {
+            welcomeUserNameEl.textContent = userName;
+            console.log('✅ Welcome user name güncellendi');
+        } else {
+            console.warn('⚠️ Welcome user name elementi bulunamadı');
+        }
+        
         if (userAvatarEl) {
             userAvatarEl.src = currentUser.avatar_url || '';
             userAvatarEl.alt = userName;
+            console.log('✅ User avatar güncellendi:', currentUser.avatar_url);
+        } else {
+            console.warn('⚠️ User avatar elementi bulunamadı');
         }
         
         // Kullanıcı rolünü göster (varsayılan olarak guest, sonra güncellenecek)
@@ -250,14 +311,18 @@ function showMainScreen() {
     
     // URL'ye göre view'ı ayarla
     const pathname = window.location.pathname;
-    console.log('Current pathname:', pathname);
+    console.log('📍 Current pathname:', pathname);
     
-    if (pathname === '/dashboard' || pathname === '/') {
-        // Eğer oda içindeyse room view'ı göster, değilse home
-        if (!currentRoom) {
-            switchView('home');
+    // Kısa bir gecikme ile view'ı değiştir (DOM'un güncellenmesi için)
+    setTimeout(() => {
+        if (pathname === '/dashboard' || pathname === '/') {
+            // Eğer oda içindeyse room view'ı göster, değilse home
+            if (!currentRoom) {
+                console.log('🏠 Home view gösteriliyor');
+                switchView('home');
+            }
         }
-    }
+    }, 50);
 }
 
 function switchView(viewName) {
