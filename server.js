@@ -20,15 +20,32 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0'; // Tüm ağ arayüzlerinde dinle
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true, // Tüm origin'lere izin ver
+  credentials: true, // Cookie'leri gönder
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Render.com ve diğer proxy'ler için trust proxy ayarı
+app.set('trust proxy', 1);
+
+// Session yapılandırması
+const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
   secret: process.env.SESSION_SECRET || 'spotify-stream-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 saat
+  cookie: { 
+    secure: isProduction, // Production'da HTTPS için true
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 saat
+    sameSite: isProduction ? 'lax' : 'lax' // Render.com için 'lax' yeterli
+  },
+  name: 'spotify-stream-session' // Session cookie adı
 }));
 
 // Routes
@@ -42,8 +59,21 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/spotify', spotifyRoutes);
 
-// Ana sayfa
+// Ana sayfa - giriş kontrolü
 app.get('/', (req, res) => {
+  // Eğer giriş yapılmışsa dashboard'a yönlendir
+  if (req.session.userId) {
+    return res.redirect('/dashboard');
+  }
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Dashboard - giriş yapılmış kullanıcılar için
+app.get('/dashboard', (req, res) => {
+  // Giriş yapılmamışsa ana sayfaya yönlendir
+  if (!req.session.userId) {
+    return res.redirect('/');
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

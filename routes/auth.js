@@ -92,14 +92,33 @@ router.get('/spotify/callback', async (req, res) => {
         req.session.spotifyId = userInfo.id;
         req.session.accessToken = access_token;
         req.session.refreshToken = refresh_token;
+        req.session.displayName = userInfo.display_name;
+        req.session.avatarUrl = userInfo.images?.[0]?.url || null;
+        
+        console.log('Session bilgileri kaydedildi:', {
+          userId: req.session.userId,
+          sessionID: req.sessionID
+        });
+        
+        // Session'ı kaydet ve yönlendir
+        req.session.save((err) => {
+          if (err) {
+            console.error('Session kayıt hatası:', err);
+            return res.redirect('/?error=session_error');
+          }
 
-        // Giriş e-postası gönder
-        if (userInfo.email) {
-          sendLoginEmail(userInfo.email, userInfo.display_name || 'Kullanıcı')
-            .catch(err => console.error('E-posta gönderme hatası:', err));
-        }
+          console.log('Session başarıyla kaydedildi, yönlendiriliyor...');
 
-        res.redirect('/?login=success');
+          // Giriş e-postası gönder (async, hata vermesin)
+          if (userInfo.email) {
+            sendLoginEmail(userInfo.email, userInfo.display_name || 'Kullanıcı')
+              .catch(err => console.error('E-posta gönderme hatası:', err));
+          }
+
+          // Dashboard'a yönlendir
+          console.log('Dashboard\'a yönlendiriliyor: /dashboard');
+          res.redirect('/dashboard');
+        });
       }
     );
   } catch (error) {
@@ -110,7 +129,12 @@ router.get('/spotify/callback', async (req, res) => {
 
 // Oturum kontrolü
 router.get('/me', (req, res) => {
+  console.log('Auth /me endpoint çağrıldı');
+  console.log('Session ID:', req.sessionID);
+  console.log('Session userId:', req.session.userId);
+  
   if (!req.session.userId) {
+    console.log('Session userId yok, 401 döndürülüyor');
     return res.status(401).json({ error: 'Oturum açılmamış' });
   }
 
@@ -119,11 +143,14 @@ router.get('/me', (req, res) => {
     [req.session.userId],
     (err, user) => {
       if (err) {
+        console.error('Veritabanı hatası:', err);
         return res.status(500).json({ error: 'Veritabanı hatası' });
       }
       if (!user) {
+        console.log('Kullanıcı bulunamadı:', req.session.userId);
         return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
       }
+      console.log('Kullanıcı bulundu:', user.display_name);
       res.json(user);
     }
   );

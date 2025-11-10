@@ -40,6 +40,14 @@ git push -u origin main
    - **Build Command**: `npm install`
    - **Start Command**: `npm start`
 
+**💡 Not:** PM2'ye gerek yok! Render.com zaten:
+   - ✅ Uygulamanızı 7/24 çalıştırır
+   - ✅ Çökerse otomatik yeniden başlatır
+   - ✅ Log'ları tutar
+   - ✅ Process management yapar
+   
+   Sadece `npm start` yeterli (bu `node server.js` çalıştırır).
+
 ### Adım 3: Environment Variables Ekleme
 
 Render Dashboard'da **"Environment"** sekmesine gidin ve ekleyin:

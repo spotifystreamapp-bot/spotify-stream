@@ -17,6 +17,7 @@ function handleSpotifyLogin(e) {
     
     try {
         // Direkt olarak Spotify auth sayfasına yönlendir
+        // credentials: 'include' ile cookie'lerin gönderilmesini sağla
         window.location.href = '/auth/spotify';
     } catch (error) {
         console.error('Spotify giriş hatası:', error);
@@ -32,23 +33,63 @@ window.handleSpotifyLoginClick = function(e) {
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Sayfa yüklendi, event listenerlar kuruluyor...');
+    console.log('Current pathname:', window.location.pathname);
     setupEventListeners();
     await checkAuth();
+});
+
+// Sayfa yüklendiğinde URL'yi kontrol et
+window.addEventListener('load', () => {
+    console.log('Page loaded, checking URL...');
+    const pathname = window.location.pathname;
+    if (pathname === '/dashboard') {
+        checkAuth();
+    }
 });
 
 // Oturum kontrolü
 async function checkAuth() {
     try {
-        const response = await fetch('/auth/me');
+        console.log('Auth kontrolü başlatılıyor...');
+        const response = await fetch('/auth/me', {
+            method: 'GET',
+            credentials: 'include', // Cookie'leri gönder
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Auth response status:', response.status);
+        
         if (response.ok) {
             currentUser = await response.json();
+            console.log('Kullanıcı bilgileri alındı:', currentUser);
+            
+            // Ana ekranı göster
             showMainScreen();
+            
+            // URL dashboard değilse güncelle
+            if (window.location.pathname !== '/dashboard') {
+                window.history.pushState({}, '', '/dashboard');
+            }
         } else {
+            console.log('Giriş yapılmamış, login ekranına yönlendiriliyor...');
+            // Giriş yapılmamışsa login ekranını göster
             showLoginScreen();
+            
+            // Eğer dashboard'taysa ana sayfaya yönlendir
+            if (window.location.pathname === '/dashboard') {
+                window.history.pushState({}, '', '/');
+            }
         }
     } catch (error) {
         console.error('Auth kontrolü hatası:', error);
         showLoginScreen();
+        
+        // Eğer dashboard'taysa ana sayfaya yönlendir
+        if (window.location.pathname === '/dashboard') {
+            window.history.pushState({}, '', '/');
+        }
     }
 }
 
@@ -77,6 +118,17 @@ function setupEventListeners() {
     // Çıkış butonu
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
         await logout();
+    });
+    
+    // Ayarlar butonu
+    document.getElementById('settings-btn')?.addEventListener('click', () => {
+        openSettingsModal();
+    });
+    
+    // Oda ayarları butonu
+    document.getElementById('room-settings-btn')?.addEventListener('click', () => {
+        // Oda ayarları modal'ı (ileride eklenecek)
+        showStatus('Oda ayarları yakında eklenecek', 'info');
     });
 
     // Navigasyon
@@ -107,6 +159,14 @@ function setupEventListeners() {
             }, 500);
         });
     }
+    
+    // Şarkı çalmaya başla butonu
+    document.getElementById('start-playing-btn')?.addEventListener('click', () => {
+        if (currentRoom) {
+            switchView('room');
+            loadRoomData();
+        }
+    });
 
     // Socket event'leri
     socket.on('connect', () => {
@@ -153,8 +213,19 @@ function showMainScreen() {
     document.getElementById('main-screen').classList.add('active');
     
     if (currentUser) {
-        document.getElementById('user-name').textContent = currentUser.display_name || 'Kullanıcı';
+        const userName = currentUser.display_name || 'Kullanıcı';
+        document.getElementById('user-name').textContent = userName;
+        document.getElementById('welcome-user-name').textContent = userName;
         document.getElementById('user-avatar').src = currentUser.avatar_url || '';
+        document.getElementById('user-avatar').alt = userName;
+        
+        // Kullanıcı rolünü göster (varsayılan olarak guest, sonra güncellenecek)
+        updateUserRoleBadge('guest');
+    }
+    
+    // URL'ye göre view'ı ayarla
+    if (window.location.pathname === '/dashboard') {
+        switchView('home');
     }
 }
 
@@ -175,7 +246,15 @@ function switchView(viewName) {
     if (view) {
         view.classList.add('active');
     }
+    
+    // URL'yi güncelle (history API ile)
+    if (viewName !== 'room') {
+        window.history.pushState({ view: viewName }, '', `/dashboard`);
+    }
 }
+
+// Global fonksiyon - HTML'den çağrılabilir
+window.switchView = switchView;
 
 // Çıkış
 async function logout() {
@@ -184,11 +263,41 @@ async function logout() {
         if (response.ok) {
             currentUser = null;
             currentRoom = null;
+            userRole = null;
             socket.disconnect();
-            showLoginScreen();
+            window.location.href = '/';
         }
     } catch (error) {
         console.error('Çıkış hatası:', error);
+    }
+}
+
+// Kullanıcı rol rozetini güncelle
+function updateUserRoleBadge(role) {
+    const roleBadge = document.getElementById('user-role');
+    if (!roleBadge) return;
+    
+    roleBadge.className = 'user-role-badge';
+    roleBadge.textContent = '';
+    
+    switch(role) {
+        case 'owner':
+            roleBadge.classList.add('owner');
+            roleBadge.textContent = '🟢 Ana Admin';
+            break;
+        case 'admin':
+            roleBadge.classList.add('admin');
+            roleBadge.textContent = '🟡 Admin';
+            break;
+        case 'ranked-admin':
+            roleBadge.classList.add('ranked-admin');
+            roleBadge.textContent = '⭐ Rütbeli Admin';
+            break;
+        case 'guest':
+        default:
+            roleBadge.classList.add('guest');
+            roleBadge.textContent = '🔵 Misafir';
+            break;
     }
 }
 
@@ -215,9 +324,15 @@ async function createRoom() {
             // Odaya katıl
             socket.emit('join-room', { roomId: data.roomId, userId: currentUser.id });
             
+            // Kullanıcıyı owner olarak işaretle
+            userRole = 'owner';
+            updateUserRoleBadge('owner');
+            
             // Oda görünümüne geç
-            switchView('room');
-            loadRoomData();
+            setTimeout(() => {
+                switchView('room');
+                loadRoomData();
+            }, 1000);
         } else {
             showStatus('Oda oluşturulamadı', 'error');
         }
@@ -295,9 +410,35 @@ async function checkUserRole() {
             const data = await response.json();
             userRole = data.role;
             
+            // Rol rozetini güncelle
+            updateUserRoleBadge(data.role);
+            
             if (data.status === 'active') {
                 // Aktifse arama bölümünü göster
-                document.getElementById('search-section').classList.remove('hidden');
+                const searchSection = document.getElementById('search-section');
+                if (searchSection) {
+                    searchSection.classList.remove('hidden');
+                }
+            } else {
+                // Beklemedeyse arama bölümünü gizle
+                const searchSection = document.getElementById('search-section');
+                if (searchSection) {
+                    searchSection.classList.add('hidden');
+                }
+            }
+            
+            // Admin/Owner ise bekleme listesini göster
+            if (data.role === 'owner' || data.role === 'admin') {
+                const pendingSection = document.getElementById('pending-users-section');
+                if (pendingSection) {
+                    pendingSection.classList.remove('hidden');
+                }
+                updatePendingUsers();
+            } else {
+                const pendingSection = document.getElementById('pending-users-section');
+                if (pendingSection) {
+                    pendingSection.classList.add('hidden');
+                }
             }
         }
     } catch (error) {
@@ -310,10 +451,20 @@ async function loadRoomData() {
     if (!currentRoom) return;
 
     // Oda bilgileri
-    const roomResponse = await fetch(`/api/rooms/${currentRoom}`);
-    if (roomResponse.ok) {
-        const roomData = await roomResponse.json();
-        document.getElementById('current-room-name').textContent = roomData.name || 'Oda';
+    try {
+        const roomResponse = await fetch(`/api/rooms/${currentRoom}`);
+        if (roomResponse.ok) {
+            const roomData = await roomResponse.json();
+            document.getElementById('current-room-name').textContent = roomData.name || 'Oda';
+            if (roomData.code) {
+                const roomCodeDisplay = document.getElementById('room-code-display');
+                if (roomCodeDisplay) {
+                    roomCodeDisplay.textContent = roomData.code;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Oda bilgisi yüklenirken hata:', error);
     }
 
     // Kullanıcı rolünü kontrol et
@@ -327,6 +478,14 @@ async function loadRoomData() {
 
     // Şarkı sırası
     socket.emit('get-queue', currentRoom);
+    
+    // Oda kullanıcı sayısını güncelle
+    socket.emit('get-room-users-count', { roomId: currentRoom }, (count) => {
+        const userCountEl = document.getElementById('room-user-count');
+        if (userCountEl) {
+            userCountEl.textContent = `${count || 0} kullanıcı`;
+        }
+    });
 }
 
 // Bekleme listesini güncelle
@@ -351,20 +510,33 @@ async function updatePendingUsers() {
 // Bekleme listesini göster
 function displayPendingUsers(users) {
     const container = document.getElementById('pending-users-list');
+    const pendingCount = document.getElementById('pending-count');
+    
+    if (pendingCount) {
+        pendingCount.textContent = users.length;
+    }
+    
     container.innerHTML = '';
+
+    if (users.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Bekleme listesinde kullanıcı yok</p>';
+        return;
+    }
 
     users.forEach(user => {
         const item = document.createElement('div');
         item.className = 'user-item';
         item.innerHTML = `
-            <img src="${user.avatar_url || ''}" alt="${user.display_name}" class="avatar">
+            <img src="${user.avatar_url || ''}" alt="${user.display_name || 'Kullanıcı'}" class="avatar" onerror="this.src=''">
             <div class="user-item-info">
-                <div class="user-item-name">${user.display_name}</div>
+                <div class="user-item-name">${user.display_name || 'Kullanıcı'}</div>
+                <div class="user-item-role">Beklemede</div>
             </div>
             <div class="user-item-actions">
-                <button class="action-btn" onclick="acceptUser('${user.user_id}')">Kabul</button>
-                <button class="action-btn" onclick="rejectUser('${user.user_id}')">Reddet</button>
-                <button class="action-btn" onclick="banUser('${user.user_id}')">Banla</button>
+                <button class="action-btn" onclick="acceptUser('${user.user_id}')" title="Kabul Et">✅</button>
+                <button class="action-btn" onclick="rejectUser('${user.user_id}')" title="Reddet">❌</button>
+                <button class="action-btn danger" onclick="banUser('${user.user_id}')" title="Banla">🚫</button>
+                <button class="action-btn" onclick="openUserActionsModal('${user.user_id}', '${(user.display_name || 'Kullanıcı').replace(/'/g, "\\'")}', 'pending')" title="Daha Fazla">⋯</button>
             </div>
         `;
         container.appendChild(item);
@@ -373,10 +545,58 @@ function displayPendingUsers(users) {
 
 // Aktif kullanıcıları güncelle
 function updateActiveUsers() {
+    if (!currentRoom) return;
+    
     // Socket üzerinden aktif kullanıcıları al
-    // Şimdilik placeholder
+    socket.emit('get-active-users', { roomId: currentRoom }, (users) => {
+        displayActiveUsers(users || []);
+    });
+}
+
+// Aktif kullanıcıları göster
+function displayActiveUsers(users) {
     const container = document.getElementById('active-users-list');
-    container.innerHTML = '<p style="color: var(--text-secondary);">Kullanıcılar yükleniyor...</p>';
+    const activeCount = document.getElementById('active-count');
+    
+    if (activeCount) {
+        activeCount.textContent = users.length;
+    }
+    
+    container.innerHTML = '';
+
+    if (users.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Aktif kullanıcı yok</p>';
+        return;
+    }
+
+    users.forEach(user => {
+        const item = document.createElement('div');
+        item.className = 'user-item';
+        
+        // Kullanıcı rolüne göre rozet
+        let roleBadge = '';
+        if (user.role === 'owner') {
+            roleBadge = '<span class="badge owner">🟢 Ana Admin</span>';
+        } else if (user.role === 'admin') {
+            roleBadge = user.ranked ? '<span class="badge ranked-admin">⭐ Rütbeli Admin</span>' : '<span class="badge admin">🟡 Admin</span>';
+        } else if (user.role === 'guest') {
+            roleBadge = user.always_allowed ? '<span class="badge guest">⭐ Müdavim</span>' : '<span class="badge guest">🔵 Misafir</span>';
+        }
+        
+        item.innerHTML = `
+            <img src="${user.avatar_url || ''}" alt="${user.display_name || 'Kullanıcı'}" class="avatar" onerror="this.src=''">
+            <div class="user-item-info">
+                <div class="user-item-name">${user.display_name || 'Kullanıcı'}</div>
+                <div class="user-item-role">${roleBadge}</div>
+            </div>
+            ${(userRole === 'owner' || (userRole === 'admin' && user.role === 'guest')) && user.user_id !== currentUser?.id ? `
+            <div class="user-item-actions">
+                <button class="action-btn" onclick="openUserActionsModal('${user.user_id}', '${(user.display_name || 'Kullanıcı').replace(/'/g, "\\'")}', '${user.role}')" title="İşlemler">⋯</button>
+            </div>
+            ` : ''}
+        `;
+        container.appendChild(item);
+    });
 }
 
 // Şarkı sırasını güncelle
@@ -389,24 +609,31 @@ function updateQueue() {
 // Şarkı sırasını göster
 function displayQueue(queue) {
     const container = document.getElementById('queue-list');
+    const queueCount = document.getElementById('queue-count');
+    
+    if (queueCount) {
+        queueCount.textContent = queue.length;
+    }
+    
     container.innerHTML = '';
 
-    if (queue.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-secondary);">Sırada şarkı yok</p>';
+    if (!queue || queue.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Sırada şarkı yok</p>';
         return;
     }
 
-    queue.forEach(item => {
+    queue.forEach((item, index) => {
         const queueItem = document.createElement('div');
         queueItem.className = 'queue-item';
         queueItem.innerHTML = `
-            <img src="${item.album_art || ''}" alt="${item.track_name}" class="queue-item-art">
+            <div style="font-size: 14px; color: var(--text-tertiary); min-width: 24px;">${index + 1}</div>
+            <img src="${item.album_art || ''}" alt="${item.track_name || 'Şarkı'}" class="queue-item-art" onerror="this.src=''">
             <div class="queue-item-info">
-                <div class="queue-item-title">${item.track_name}</div>
-                <div class="queue-item-artist">${item.artist_name}</div>
+                <div class="queue-item-title">${item.track_name || 'Bilinmeyen Şarkı'}</div>
+                <div class="queue-item-artist">${item.artist_name || 'Bilinmeyen Sanatçı'}</div>
             </div>
             ${(userRole === 'owner' || userRole === 'admin') ? 
-                `<button class="action-btn" onclick="removeFromQueue(${item.id})">Kaldır</button>` : 
+                `<button class="action-btn danger" onclick="removeFromQueue(${item.id})" title="Kaldır">🗑️</button>` : 
                 ''}
         `;
         container.appendChild(queueItem);
@@ -526,9 +753,118 @@ function showStatus(message, type) {
     }, 5000);
 }
 
+// Oda kodunu kopyala
+function copyRoomCode() {
+    const roomCode = document.getElementById('room-code').textContent;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(roomCode).then(() => {
+            showStatus('Kod kopyalandı!', 'success');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = roomCode;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showStatus('Kod kopyalandı!', 'success');
+    }
+}
+window.copyRoomCode = copyRoomCode;
+
+// Ayarlar Modal
+function openSettingsModal() {
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettingsModal() {
+    document.getElementById('settings-modal').classList.add('hidden');
+}
+window.closeSettingsModal = closeSettingsModal;
+
+// Kullanıcı İşlemleri Modal
+function openUserActionsModal(userId, userName, userRole) {
+    const modal = document.getElementById('user-actions-modal');
+    const title = document.getElementById('user-actions-title');
+    const content = document.getElementById('user-actions-content');
+    
+    title.textContent = `${userName} - İşlemler`;
+    
+    // Kullanıcı rolüne göre işlemleri göster
+    let actionsHTML = '';
+    
+    if (userRole === 'pending' || userRole === 'guest') {
+        actionsHTML = `
+            <div class="user-actions-list">
+                <button class="action-btn" onclick="acceptUser('${userId}')">✅ Kabul Et</button>
+                <button class="action-btn" onclick="rejectUser('${userId}')">❌ Reddet</button>
+                <button class="action-btn" onclick="banUser('${userId}')">🚫 Banla</button>
+                <button class="action-btn" onclick="makeAdmin('${userId}')">👑 Admin Yap</button>
+                <button class="action-btn" onclick="allowAlways('${userId}')">⭐ Hep İzin Ver</button>
+            </div>
+        `;
+    } else if (userRole === 'admin') {
+        actionsHTML = `
+            <div class="user-actions-list">
+                <button class="action-btn" onclick="limitPermissions('${userId}')">🔒 Yetki Sınırla</button>
+                <button class="action-btn" onclick="makeGuest('${userId}')">👤 Misafir Yap</button>
+                <button class="action-btn danger" onclick="banUser('${userId}')">🚫 Banla</button>
+            </div>
+        `;
+    }
+    
+    content.innerHTML = actionsHTML;
+    modal.classList.remove('hidden');
+}
+
+function closeUserActionsModal() {
+    document.getElementById('user-actions-modal').classList.add('hidden');
+}
+window.closeUserActionsModal = closeUserActionsModal;
+
+// Kullanıcı işlemleri
+async function makeAdmin(userId) {
+    await userAction('make-admin', userId);
+    closeUserActionsModal();
+}
+
+async function makeGuest(userId) {
+    await userAction('make-guest', userId);
+    closeUserActionsModal();
+}
+
+async function allowAlways(userId) {
+    await userAction('allow-always', userId);
+    closeUserActionsModal();
+}
+
+async function limitPermissions(userId) {
+    showStatus('Yetki sınırlama özelliği yakında eklenecek', 'info');
+    closeUserActionsModal();
+}
+
 // Global fonksiyonlar
 window.acceptUser = acceptUser;
 window.rejectUser = rejectUser;
 window.banUser = banUser;
 window.removeFromQueue = removeFromQueue;
+window.makeAdmin = makeAdmin;
+window.makeGuest = makeGuest;
+window.allowAlways = allowAlways;
+window.openUserActionsModal = openUserActionsModal;
+window.limitPermissions = limitPermissions;
+
+// Modal dışına tıklandığında kapat
+document.addEventListener('click', (e) => {
+    const settingsModal = document.getElementById('settings-modal');
+    const userActionsModal = document.getElementById('user-actions-modal');
+    
+    if (e.target === settingsModal) {
+        closeSettingsModal();
+    }
+    if (e.target === userActionsModal) {
+        closeUserActionsModal();
+    }
+});
 

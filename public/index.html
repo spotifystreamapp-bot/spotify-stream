@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Stream - Paylaşımlı Dinleme</title>
+    <title>🎵 Spotify Stream — Gerçek Zamanlı Paylaşımlı Dinleme</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,8 +17,8 @@
                 <svg width="60" height="60" viewBox="0 0 24 24" fill="#1DB954">
                     <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
                 </svg>
-                <h1>Spotify Stream</h1>
-                <p class="subtitle">Gerçek zamanlı paylaşımlı dinleme deneyimi</p>
+                <h1>🎵 Spotify Stream</h1>
+                <p class="subtitle">Gerçek Zamanlı Paylaşımlı Dinleme Deneyimi</p>
             </div>
             <button id="spotify-login-btn" type="button" class="spotify-btn" onclick="handleSpotifyLoginClick(event)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -32,45 +32,107 @@
 
     <!-- Ana Ekran -->
     <div id="main-screen" class="screen">
+        <!-- Sidebar -->
         <div class="sidebar">
-            <div class="user-info">
-                <img id="user-avatar" src="" alt="Avatar" class="avatar">
-                <div class="user-details">
-                    <span id="user-name">Kullanıcı</span>
-                    <button id="logout-btn" class="logout-btn">Çıkış</button>
+            <div class="sidebar-header">
+                <div class="user-info">
+                    <img id="user-avatar" src="" alt="Avatar" class="avatar">
+                    <div class="user-details">
+                        <span id="user-name" class="user-name">Kullanıcı</span>
+                        <span id="user-role" class="user-role-badge"></span>
+                    </div>
                 </div>
+                <button id="settings-btn" class="icon-btn" title="Ayarlar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.14 12.94c-.04-.3-.06-.61-.06-.94 0-.32.02-.64.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.3-.06.61-.06.94 0 .32.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                </button>
             </div>
+
             <nav class="nav-menu">
-                <button class="nav-item active" data-view="create-room">
-                    <span>🏠</span> Oda Oluştur
+                <button class="nav-item active" data-view="home">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                    <span>Ana Sayfa</span>
+                </button>
+                <button class="nav-item" data-view="create-room">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    <span>Oda Oluştur</span>
                 </button>
                 <button class="nav-item" data-view="join-room">
-                    <span>🔑</span> Koda Gir
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span>Koda Gir</span>
                 </button>
             </nav>
+
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="logout-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                    </svg>
+                    <span>Oturumu Kapat</span>
+                </button>
+            </div>
         </div>
 
+        <!-- Main Content -->
         <div class="main-content">
+            <!-- Ana Sayfa / Hoş Geldiniz -->
+            <div id="home-view" class="view active">
+                <div class="view-header">
+                    <h1>Hoş Geldiniz, <span id="welcome-user-name">Kullanıcı</span>! 🎵</h1>
+                    <p class="view-subtitle">Gerçek zamanlı paylaşımlı dinleme deneyimine başlayın</p>
+                </div>
+                <div class="welcome-cards">
+                    <div class="welcome-card" onclick="switchView('create-room')">
+                        <div class="card-icon">🏠</div>
+                        <h3>Oda Oluştur</h3>
+                        <p>Yeni bir oda oluşturarak müzik paylaşımına başlayın</p>
+                    </div>
+                    <div class="welcome-card" onclick="switchView('join-room')">
+                        <div class="card-icon">🔑</div>
+                        <h3>Koda Gir</h3>
+                        <p>6 haneli kod veya QR kod ile bir odaya katılın</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Oda Oluştur -->
-            <div id="create-room-view" class="view active">
+            <div id="create-room-view" class="view">
                 <div class="view-header">
                     <h2>Yeni Oda Oluştur</h2>
+                    <p class="view-subtitle">Arkadaşlarınızla müzik paylaşmak için yeni bir oda oluşturun</p>
                 </div>
                 <div class="form-container">
                     <input type="text" id="room-name-input" placeholder="Oda Adı (Opsiyonel)" class="input">
-                    <button id="create-room-btn" class="primary-btn">Oda Oluştur</button>
+                    <button id="create-room-btn" class="primary-btn">
+                        <span>Oda Oluştur</span>
+                    </button>
                 </div>
                 <div id="room-created" class="room-info hidden">
-                    <h3>Odanız Hazır!</h3>
+                    <div class="success-message">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="#1DB954">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <h3>Odanız Hazır!</h3>
+                    </div>
                     <div class="room-code-display">
                         <p class="code-label">Oda Kodu:</p>
                         <p id="room-code" class="code-value"></p>
+                        <button class="copy-btn" onclick="copyRoomCode()">Kopyala</button>
                     </div>
                     <div class="qr-container">
                         <p class="qr-label">QR Kod:</p>
                         <img id="qr-code-img" src="" alt="QR Code" class="qr-code">
                     </div>
-                    <button id="start-playing-btn" class="primary-btn">Şarkı Çalmaya Başla</button>
+                    <button id="start-playing-btn" class="primary-btn large">
+                        <span>🎵 Şarkı Çalmaya Başla</span>
+                    </button>
                 </div>
             </div>
 
@@ -78,10 +140,13 @@
             <div id="join-room-view" class="view">
                 <div class="view-header">
                     <h2>Koda Gir</h2>
+                    <p class="view-subtitle">6 haneli kodu veya QR kodu kullanarak odaya katılın</p>
                 </div>
                 <div class="form-container">
-                    <input type="text" id="room-code-input" placeholder="6 Haneli Kod" maxlength="6" class="input code-input">
-                    <button id="join-room-btn" class="primary-btn">Odaya Katıl</button>
+                    <input type="text" id="room-code-input" placeholder="6 Haneli Kod" maxlength="6" class="input code-input" style="text-transform: uppercase; font-size: 24px; letter-spacing: 8px; text-align: center;">
+                    <button id="join-room-btn" class="primary-btn">
+                        <span>Odaya Katıl</span>
+                    </button>
                 </div>
                 <div id="join-status" class="status-message hidden"></div>
             </div>
@@ -89,36 +154,115 @@
             <!-- Oda Ekranı -->
             <div id="room-view" class="view">
                 <div class="room-header">
-                    <h2 id="current-room-name">Oda</h2>
+                    <div class="room-header-info">
+                        <h2 id="current-room-name">Oda</h2>
+                        <div class="room-meta">
+                            <span id="room-code-display" class="room-code-badge"></span>
+                            <span id="room-user-count" class="room-user-count"></span>
+                        </div>
+                    </div>
                     <div class="room-actions">
+                        <button id="room-settings-btn" class="icon-btn" title="Oda Ayarları">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19.14 12.94c-.04-.3-.06-.61-.06-.94 0-.32.02-.64.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.3-.06.61-.06.94 0 .32.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                            </svg>
+                        </button>
                         <button id="leave-room-btn" class="secondary-btn">Odadan Çık</button>
                     </div>
                 </div>
 
                 <!-- Bekleme Listesi (Sadece Admin/Owner) -->
                 <div id="pending-users-section" class="section hidden">
-                    <h3>Bekleme Listesi</h3>
+                    <div class="section-header">
+                        <h3>⏳ Bekleme Listesi</h3>
+                        <span id="pending-count" class="badge">0</span>
+                    </div>
                     <div id="pending-users-list" class="user-list"></div>
                 </div>
 
                 <!-- Aktif Kullanıcılar -->
                 <div class="section">
-                    <h3>Aktif Kullanıcılar</h3>
+                    <div class="section-header">
+                        <h3>👥 Aktif Kullanıcılar</h3>
+                        <span id="active-count" class="badge">0</span>
+                    </div>
                     <div id="active-users-list" class="user-list"></div>
                 </div>
 
                 <!-- Şarkı Sırası -->
                 <div class="section">
-                    <h3>Şarkı Sırası</h3>
+                    <div class="section-header">
+                        <h3>🎵 Şarkı Sırası</h3>
+                        <span id="queue-count" class="badge">0</span>
+                    </div>
                     <div id="queue-list" class="queue-list"></div>
                 </div>
 
                 <!-- Şarkı Arama (Sadece Aktif Üyeler) -->
                 <div id="search-section" class="section hidden">
-                    <h3>Şarkı Ekle</h3>
+                    <div class="section-header">
+                        <h3>🔍 Şarkı Ekle</h3>
+                    </div>
                     <input type="text" id="track-search-input" placeholder="Şarkı, sanatçı veya albüm ara..." class="input search-input">
                     <div id="search-results" class="search-results"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ayarlar Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Ayarlar</h2>
+                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>🧩 Ana Ayarlar</h3>
+                    <div class="settings-item">
+                        <label>Spotify Hesabı</label>
+                        <button class="secondary-btn small">Hesap Bilgileri</button>
+                    </div>
+                    <div class="settings-item">
+                        <label>Dil Seçenekleri</label>
+                        <select class="input">
+                            <option>Türkçe</option>
+                            <option>English</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label>Global / Yakın Çevre İstek Ayarları</label>
+                        <div class="toggle-group">
+                            <label class="toggle">
+                                <input type="checkbox" id="global-requests">
+                                <span class="toggle-slider"></span>
+                                <span>Global İstekler</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <label>Görüntülenecek Hesap Bilgileri</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" checked> Çalma Listeleri</label>
+                            <label><input type="checkbox" checked> Beğeniler</label>
+                            <label><input type="checkbox" checked> Bio</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kullanıcı İşlemleri Modal (Admin için) -->
+    <div id="user-actions-modal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3 id="user-actions-title">Kullanıcı İşlemleri</h3>
+                <button class="modal-close" onclick="closeUserActionsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="user-actions-content"></div>
             </div>
         </div>
     </div>
@@ -127,4 +271,3 @@
     <script src="app.js"></script>
 </body>
 </html>
-
