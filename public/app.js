@@ -156,8 +156,15 @@ function setupEventListeners() {
         });
     });
 
-    // Oda oluştur
-    document.getElementById('create-room-btn')?.addEventListener('click', createRoom);
+    // Stream onay butonu
+    document.getElementById('confirm-stream-btn')?.addEventListener('click', confirmStream);
+    
+    // Stream name input Enter tuşu
+    document.getElementById('stream-name-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            confirmStream();
+        }
+    });
 
     // Odaya katıl
     document.getElementById('join-room-btn')?.addEventListener('click', joinRoom);
@@ -397,10 +404,72 @@ function updateUserRoleBadge(role) {
     }
 }
 
-// Oda oluştur
-async function createRoom() {
-    const roomName = document.getElementById('room-name-input').value || 'Yeni Oda';
+// Stream type seçimi
+let selectedStreamType = null;
+
+function selectStreamType(type) {
+    selectedStreamType = type;
+    // Tüm seçeneklerden active class'ını kaldır
+    document.querySelectorAll('.stream-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    // Seçilen seçeneğe active class'ı ekle
+    const selectedOption = document.querySelector(`.stream-option[data-type="${type}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('active');
+    }
+}
+
+// Stream başlat
+function startStream(type) {
+    selectedStreamType = type;
+    // Modal'ı aç
+    const modal = document.getElementById('stream-name-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        // Input'a odaklan
+        setTimeout(() => {
+            const input = document.getElementById('stream-name-input');
+            if (input) {
+                input.focus();
+            }
+        }, 100);
+    }
+}
+
+// Stream name modal'ı kapat
+function closeStreamNameModal() {
+    const modal = document.getElementById('stream-name-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.getElementById('stream-name-input').value = '';
+    }
+}
+
+// Stream'i onayla ve oda oluştur
+async function confirmStream() {
+    const streamName = document.getElementById('stream-name-input').value || getDefaultStreamName(selectedStreamType);
     
+    // Modal'ı kapat
+    closeStreamNameModal();
+    
+    // Oda oluştur
+    await createRoom(streamName);
+}
+
+// Stream tipine göre varsayılan isim
+function getDefaultStreamName(type) {
+    const names = {
+        'friends': 'Arkadaşlarla Yayın',
+        'business': 'İşletme Yayını',
+        'streamer': 'Canlı Yayın',
+        'custom': 'Özel Yayın'
+    };
+    return names[type] || 'Yeni Yayın';
+}
+
+// Oda oluştur
+async function createRoom(roomName = 'Yeni Oda') {
     try {
         const response = await fetch('/api/rooms/create', {
             method: 'POST',
@@ -437,6 +506,12 @@ async function createRoom() {
         showStatus('Bir hata oluştu', 'error');
     }
 }
+
+// Global fonksiyonlar
+window.selectStreamType = selectStreamType;
+window.startStream = startStream;
+window.closeStreamNameModal = closeStreamNameModal;
+window.confirmStream = confirmStream;
 
 // Odaya katıl
 async function joinRoom() {

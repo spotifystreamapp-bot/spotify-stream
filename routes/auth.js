@@ -158,6 +158,24 @@ router.get('/me', (req, res) => {
 
 // Çıkış
 router.post('/logout', (req, res) => {
+  const userId = req.session.userId;
+  
+  // Veritabanından kullanıcının token'larını sil (Spotify accounts'tan kaydı sil)
+  if (userId) {
+    db.run(
+      'UPDATE users SET access_token = NULL, refresh_token = NULL, token_expires_at = NULL WHERE id = ?',
+      [userId],
+      (err) => {
+        if (err) {
+          console.error('Token silme hatası:', err);
+        } else {
+          console.log('Kullanıcı token\'ları silindi:', userId);
+        }
+      }
+    );
+  }
+  
+  // Session'ı yok et
   req.session.destroy((err) => {
     if (err) {
       return res.status(500).json({ error: 'Çıkış hatası' });
