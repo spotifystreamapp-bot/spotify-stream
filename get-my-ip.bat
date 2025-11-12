@@ -20,3 +20,4 @@ echo - .env dosyasindaki SPOTIFY_REDIRECT_URI'yi guncelleyin
 echo.
 pause
 
+

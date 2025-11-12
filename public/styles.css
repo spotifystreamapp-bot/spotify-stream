@@ -37,7 +37,10 @@ body {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: linear-gradient(135deg, #1DB954 0%, #1ed760 50%, #121212 100%);
+    background-image: url('Spotify-stream-sign-background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     min-height: 100vh;
 }
 
@@ -50,14 +53,29 @@ body {
     border-radius: 24px;
     padding: 60px 40px;
     text-align: center;
-    max-width: 450px;
+    max-width: 600px;
     width: 100%;
     box-shadow: var(--shadow-lg);
     backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.logo svg {
+.logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.logo-icon {
+    width: 60px;
+    height: 60px;
     margin-bottom: 20px;
+    object-fit: contain;
 }
 
 .logo h1 {
@@ -68,6 +86,8 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    text-align: center;
+    width: 100%;
 }
 
 .subtitle {
@@ -75,11 +95,13 @@ body {
     margin-bottom: 40px;
     font-size: 15px;
     line-height: 1.5;
+    text-align: center;
+    width: 100%;
 }
 
 .spotify-btn {
     background: var(--spotify-green);
-    color: white;
+    color: black;
     border: none;
     padding: 16px 40px;
     border-radius: 30px;
@@ -97,6 +119,12 @@ body {
     pointer-events: auto;
     width: 100%;
     max-width: 300px;
+}
+
+.btn-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
 }
 
 .spotify-btn:disabled {
@@ -120,6 +148,8 @@ body {
     margin-top: 24px;
     color: var(--text-secondary);
     font-size: 13px;
+    text-align: center;
+    width: 100%;
 }
 
 /* Ana Ekran */

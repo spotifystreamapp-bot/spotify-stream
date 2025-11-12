@@ -248,3 +248,4 @@ Public IP'niz sürekli değişiyorsa, DDNS (Dynamic DNS) kullanabilirsiniz:
 
 Bu şekilde IP değişse bile domain adresiniz aynı kalır!
 
+
