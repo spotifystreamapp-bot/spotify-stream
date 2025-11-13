@@ -540,34 +540,14 @@ async function createRoom(roomName = 'Yeni Oda') {
             userRole = 'owner';
             updateUserRoleBadge('owner');
             
-            // "Kodla Gir" ve "Müzik Yayını Başlat" kartlarını gizle
-            const joinRoomCard = document.getElementById('join-room-card');
-            const createRoomCard = document.getElementById('create-room-card');
-            if (joinRoomCard) {
-                joinRoomCard.classList.add('hidden');
-            }
-            if (createRoomCard) {
-                createRoomCard.classList.add('hidden');
-            }
-            
-            // Sidebar'daki nav item'ları gizle
-            const navCreateRoom = document.getElementById('nav-create-room');
-            const navJoinRoom = document.getElementById('nav-join-room');
-            if (navCreateRoom) {
-                navCreateRoom.classList.add('hidden');
-            }
-            if (navJoinRoom) {
-                navJoinRoom.classList.add('hidden');
-            }
-            
-            // Yayınlarım bölümünü göster ve yayını ekle
-            updateMyStreams();
-            
-            // Oda görünümüne geç
-            setTimeout(() => {
-                switchView('room');
-                loadRoomData();
-            }, 1000);
+            // Yayınlarım bölümünü göster ve yayını ekle (butonlar updateMyStreams içinde gizlenecek)
+            updateMyStreams().then(() => {
+                // Oda görünümüne geç
+                setTimeout(() => {
+                    switchView('room');
+                    loadRoomData();
+                }, 500);
+            });
         } else {
             showStatus('Oda oluşturulamadı', 'error');
         }
@@ -630,49 +610,15 @@ async function joinRoom() {
     }
 }
 
-// Yayını bitir
+// Yayını bitir (sadece ana sayfaya dön, odayı kapatma)
 async function leaveRoom() {
-    if (currentRoom) {
-        // Odayı kapat (owner ise)
-        if (userRole === 'owner') {
-            try {
-                await fetch(`/api/rooms/${currentRoom}/close`, {
-                    method: 'POST'
-                });
-            } catch (error) {
-                console.error('Oda kapatma hatası:', error);
-            }
-        }
-        
-        socket.emit('leave-room', { roomId: currentRoom });
-        socket.leave(currentRoom);
-    }
-    currentRoom = null;
-    userRole = null;
-    
-    // "Kodla Gir" ve "Müzik Yayını Başlat" kartlarını tekrar göster
-    const joinRoomCard = document.getElementById('join-room-card');
-    const createRoomCard = document.getElementById('create-room-card');
-    if (joinRoomCard) {
-        joinRoomCard.classList.remove('hidden');
-    }
-    if (createRoomCard) {
-        createRoomCard.classList.remove('hidden');
-    }
-    
-    // Sidebar'daki nav item'ları tekrar göster
-    const navCreateRoom = document.getElementById('nav-create-room');
-    const navJoinRoom = document.getElementById('nav-join-room');
-    if (navCreateRoom) {
-        navCreateRoom.classList.remove('hidden');
-    }
-    if (navJoinRoom) {
-        navJoinRoom.classList.remove('hidden');
-    }
+    // Odayı kapatma, sadece ana sayfaya dön
+    // currentRoom ve userRole'ü koru, böylece kullanıcı istediği zaman geri dönebilir
     
     // Yayınlarım listesini güncelle
-    updateMyStreams();
+    await updateMyStreams();
     
+    // Ana sayfaya dön
     switchView('home');
     document.getElementById('room-created').classList.add('hidden');
 }
@@ -1145,14 +1091,78 @@ async function updateMyStreams() {
             const rooms = await response.json();
             const myStreamsSection = document.getElementById('my-streams-section');
             const myStreamsList = document.getElementById('my-streams-list');
+            const createRoomCard = document.getElementById('create-room-card');
+            const joinRoomCard = document.getElementById('join-room-card');
+            const navCreateRoom = document.getElementById('nav-create-room');
+            const navJoinRoom = document.getElementById('nav-join-room');
             
             if (rooms.length > 0) {
                 myStreamsSection.classList.remove('hidden');
                 myStreamsList.innerHTML = '';
                 
+                // Aktif yayın varsa "Müzik Yayını Başlat" butonunu gizle ve yerine yayın ismini göster
+                if (currentRoom) {
+                    const activeRoom = rooms.find(r => r.id === currentRoom);
+                    if (activeRoom && createRoomCard) {
+                        createRoomCard.classList.add('hidden');
+                        // Yayın ismini göster
+                        const activeStreamCard = document.getElementById('active-stream-card');
+                        if (!activeStreamCard) {
+                            const activeCard = document.createElement('div');
+                            activeCard.id = 'active-stream-card';
+                            activeCard.className = 'welcome-card active-stream-card';
+                            activeCard.onclick = () => {
+                                switchView('room');
+                                loadRoomData();
+                            };
+                            activeCard.innerHTML = `
+                                <div class="card-icon">🎵</div>
+                                <h3>${activeRoom.name || 'Aktif Yayın'}</h3>
+                                <p>Yayınına devam etmek için tıkla</p>
+                            `;
+                            createRoomCard.parentNode.insertBefore(activeCard, createRoomCard);
+                        } else {
+                            activeStreamCard.querySelector('h3').textContent = activeRoom.name || 'Aktif Yayın';
+                        }
+                    }
+                    
+                    // Butonları ve nav item'ları gizle
+                    if (joinRoomCard) {
+                        joinRoomCard.classList.add('hidden');
+                    }
+                    if (navCreateRoom) {
+                        navCreateRoom.classList.add('hidden');
+                    }
+                    if (navJoinRoom) {
+                        navJoinRoom.classList.add('hidden');
+                    }
+                } else {
+                    // Aktif yayın yoksa butonları göster
+                    if (createRoomCard) {
+                        createRoomCard.classList.remove('hidden');
+                    }
+                    if (joinRoomCard) {
+                        joinRoomCard.classList.remove('hidden');
+                    }
+                    if (navCreateRoom) {
+                        navCreateRoom.classList.remove('hidden');
+                    }
+                    if (navJoinRoom) {
+                        navJoinRoom.classList.remove('hidden');
+                    }
+                    // Aktif yayın kartını kaldır
+                    const activeStreamCard = document.getElementById('active-stream-card');
+                    if (activeStreamCard) {
+                        activeStreamCard.remove();
+                    }
+                }
+                
                 rooms.forEach(room => {
                     const streamItem = document.createElement('div');
                     streamItem.className = 'stream-item';
+                    if (room.id === currentRoom) {
+                        streamItem.classList.add('active');
+                    }
                     streamItem.onclick = () => {
                         currentRoom = room.id;
                         // Odaya katıl
@@ -1161,8 +1171,6 @@ async function updateMyStreams() {
                         updateUserRoleBadge('owner');
                         
                         // Butonları gizle
-                        const joinRoomCard = document.getElementById('join-room-card');
-                        const createRoomCard = document.getElementById('create-room-card');
                         if (joinRoomCard) {
                             joinRoomCard.classList.add('hidden');
                         }
@@ -1171,13 +1179,32 @@ async function updateMyStreams() {
                         }
                         
                         // Sidebar'daki nav item'ları gizle
-                        const navCreateRoom = document.getElementById('nav-create-room');
-                        const navJoinRoom = document.getElementById('nav-join-room');
                         if (navCreateRoom) {
                             navCreateRoom.classList.add('hidden');
                         }
                         if (navJoinRoom) {
                             navJoinRoom.classList.add('hidden');
+                        }
+                        
+                        // Aktif yayın kartını güncelle
+                        const activeStreamCard = document.getElementById('active-stream-card');
+                        if (activeStreamCard) {
+                            activeStreamCard.querySelector('h3').textContent = room.name || 'Aktif Yayın';
+                        } else if (createRoomCard) {
+                            createRoomCard.classList.add('hidden');
+                            const activeCard = document.createElement('div');
+                            activeCard.id = 'active-stream-card';
+                            activeCard.className = 'welcome-card active-stream-card';
+                            activeCard.onclick = () => {
+                                switchView('room');
+                                loadRoomData();
+                            };
+                            activeCard.innerHTML = `
+                                <div class="card-icon">🎵</div>
+                                <h3>${room.name || 'Aktif Yayın'}</h3>
+                                <p>Yayınına devam etmek için tıkla</p>
+                            `;
+                            createRoomCard.parentNode.insertBefore(activeCard, createRoomCard);
                         }
                         
                         switchView('room');
@@ -1191,6 +1218,23 @@ async function updateMyStreams() {
                 });
             } else {
                 myStreamsSection.classList.add('hidden');
+                // Yayın yoksa butonları göster
+                if (createRoomCard) {
+                    createRoomCard.classList.remove('hidden');
+                }
+                if (joinRoomCard) {
+                    joinRoomCard.classList.remove('hidden');
+                }
+                if (navCreateRoom) {
+                    navCreateRoom.classList.remove('hidden');
+                }
+                if (navJoinRoom) {
+                    navJoinRoom.classList.remove('hidden');
+                }
+                const activeStreamCard = document.getElementById('active-stream-card');
+                if (activeStreamCard) {
+                    activeStreamCard.remove();
+                }
             }
         }
     } catch (error) {

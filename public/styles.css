@@ -1464,6 +1464,23 @@ body {
     letter-spacing: 2px;
 }
 
+.stream-item.active {
+    border-color: var(--spotify-green);
+    background: rgba(29, 185, 84, 0.1);
+}
+
+.active-stream-card {
+    border-color: var(--spotify-green);
+    background: linear-gradient(135deg, rgba(29, 185, 84, 0.1) 0%, rgba(29, 185, 84, 0.05) 100%);
+}
+
+.active-stream-card:hover {
+    border-color: var(--spotify-green);
+    background: linear-gradient(135deg, rgba(29, 185, 84, 0.2) 0%, rgba(29, 185, 84, 0.1) 100%);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(29, 185, 84, 0.3);
+}
+
 /* Utility */
 .hidden {
     display: none !important;
