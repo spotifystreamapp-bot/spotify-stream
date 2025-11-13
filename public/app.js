@@ -365,6 +365,11 @@ function switchView(viewName) {
         view.classList.add('active');
     }
     
+    // Ana sayfaya dönüldüğünde yayınlarım listesini güncelle
+    if (viewName === 'home' && currentUser) {
+        updateMyStreams();
+    }
+    
     // URL'yi güncelle (history API ile)
     if (viewName !== 'room') {
         window.history.pushState({ view: viewName }, '', `/dashboard`);
@@ -386,15 +391,14 @@ async function logout() {
             currentRoom = null;
             userRole = null;
             socket.disconnect();
-            // Login ekranına dön
-            showLoginScreen();
-            window.location.href = '/';
+            
+            // Spotify apps sayfasına yönlendir (erişimi kaldırmak için)
+            window.location.href = 'https://www.spotify.com/tr-tr/account/apps/';
         }
     } catch (error) {
         console.error('Çıkış hatası:', error);
-        // Hata olsa bile login ekranına dön
-        showLoginScreen();
-        window.location.href = '/';
+        // Hata olsa bile Spotify apps sayfasına yönlendir
+        window.location.href = 'https://www.spotify.com/tr-tr/account/apps/';
     }
 }
 
@@ -534,10 +538,14 @@ async function createRoom(roomName = 'Yeni Oda') {
             userRole = 'owner';
             updateUserRoleBadge('owner');
             
-            // "Kodla Gir" kartını gizle
+            // "Kodla Gir" ve "Müzik Yayını Başlat" kartlarını gizle
             const joinRoomCard = document.getElementById('join-room-card');
+            const createRoomCard = document.getElementById('create-room-card');
             if (joinRoomCard) {
                 joinRoomCard.classList.add('hidden');
+            }
+            if (createRoomCard) {
+                createRoomCard.classList.add('hidden');
             }
             
             // Yayınlarım bölümünü göster ve yayını ekle
@@ -610,7 +618,7 @@ async function joinRoom() {
     }
 }
 
-// Odadan çık
+// Yayını bitir
 async function leaveRoom() {
     if (currentRoom) {
         // Odayı kapat (owner ise)
@@ -630,10 +638,14 @@ async function leaveRoom() {
     currentRoom = null;
     userRole = null;
     
-    // "Kodla Gir" kartını tekrar göster
+    // "Kodla Gir" ve "Müzik Yayını Başlat" kartlarını tekrar göster
     const joinRoomCard = document.getElementById('join-room-card');
+    const createRoomCard = document.getElementById('create-room-card');
     if (joinRoomCard) {
         joinRoomCard.classList.remove('hidden');
+    }
+    if (createRoomCard) {
+        createRoomCard.classList.remove('hidden');
     }
     
     // Yayınlarım listesini güncelle
@@ -1121,6 +1133,21 @@ async function updateMyStreams() {
                     streamItem.className = 'stream-item';
                     streamItem.onclick = () => {
                         currentRoom = room.id;
+                        // Odaya katıl
+                        socket.emit('join-room', { roomId: room.id, userId: currentUser.id });
+                        userRole = 'owner';
+                        updateUserRoleBadge('owner');
+                        
+                        // Butonları gizle
+                        const joinRoomCard = document.getElementById('join-room-card');
+                        const createRoomCard = document.getElementById('create-room-card');
+                        if (joinRoomCard) {
+                            joinRoomCard.classList.add('hidden');
+                        }
+                        if (createRoomCard) {
+                            createRoomCard.classList.add('hidden');
+                        }
+                        
                         switchView('room');
                         loadRoomData();
                     };

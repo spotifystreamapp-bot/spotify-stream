@@ -578,8 +578,7 @@ body {
     50% { transform: translateY(-10px) scale(1.05); }
 }
 
-.friends-option:hover .friends-icon-img,
-.friends-option.active .friends-icon-img {
+.friends-option:hover .friends-icon-img {
     animation: friendsBounce 0.6s ease-in-out infinite;
 }
 
@@ -628,8 +627,7 @@ body {
     opacity: 0;
 }
 
-.business-option:hover .steam-animation .steam,
-.business-option.active .steam-animation .steam {
+.business-option:hover .steam-animation .steam {
     opacity: 1;
 }
 
@@ -676,8 +674,7 @@ body {
     75% { transform: scale(0.95); }
 }
 
-.streamer-option:hover .mic-icon,
-.streamer-option.active .mic-icon {
+.streamer-option:hover .mic-icon {
     animation: micTap 0.6s ease-in-out infinite;
 }
 
@@ -688,8 +685,7 @@ body {
     100% { stroke-dasharray: 100, 0; }
 }
 
-.custom-option:hover .canvas-icon path,
-.custom-option.active .canvas-icon path {
+.custom-option:hover .canvas-icon path {
     stroke-dasharray: 100;
     stroke-dashoffset: 0;
     animation: canvasDraw 2s ease-in-out infinite;
