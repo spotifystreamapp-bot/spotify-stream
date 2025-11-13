@@ -114,6 +114,65 @@ router.get('/:roomId', (req, res) => {
   );
 });
 
+// Kullanıcının odalarını getir
+router.get('/my-rooms', (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Oturum açılmamış' });
+  }
+
+  db.all(
+    `SELECT r.id, r.code, r.name, r.created_at
+     FROM rooms r
+     WHERE r.owner_id = ?
+     ORDER BY r.created_at DESC`,
+    [req.session.userId],
+    (err, rooms) => {
+      if (err) {
+        return res.status(500).json({ error: 'Veritabanı hatası' });
+      }
+      res.json(rooms || []);
+    }
+  );
+});
+
+// Odayı kapat
+router.post('/:roomId/close', (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Oturum açılmamış' });
+  }
+
+  const { roomId } = req.params;
+
+  // Sadece owner kapatabilir
+  db.get(
+    'SELECT owner_id FROM rooms WHERE id = ?',
+    [roomId],
+    (err, room) => {
+      if (err) {
+        return res.status(500).json({ error: 'Veritabanı hatası' });
+      }
+      if (!room) {
+        return res.status(404).json({ error: 'Oda bulunamadı' });
+      }
+      if (room.owner_id !== req.session.userId) {
+        return res.status(403).json({ error: 'Sadece oda sahibi odayı kapatabilir' });
+      }
+
+      // Odayı sil (veya aktif olmayan olarak işaretle)
+      db.run(
+        'DELETE FROM rooms WHERE id = ?',
+        [roomId],
+        (err) => {
+          if (err) {
+            return res.status(500).json({ error: 'Oda kapatma hatası' });
+          }
+          res.json({ success: true });
+        }
+      );
+    }
+  );
+});
+
 // Odaya katılma isteği
 router.post('/:roomId/join-request', (req, res) => {
   if (!req.session.userId) {

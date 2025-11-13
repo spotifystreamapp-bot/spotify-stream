@@ -54,9 +54,9 @@
                 </button>
                 <button class="nav-item" data-view="create-room">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                     </svg>
-                    <span>Oda Oluştur</span>
+                    <span>Müzik Yayınına Başla</span>
                 </button>
                 <button class="nav-item" data-view="join-room">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -90,11 +90,15 @@
                         <h3>Müzik Yayını Başlat</h3>
                         <p>Yeni bir müzik yayını oluşturarak paylaşımlı dinleme deneyimine başlayın</p>
                     </div>
-                    <div class="welcome-card" onclick="switchView('join-room')">
+                    <div id="join-room-card" class="welcome-card" onclick="switchView('join-room')">
                         <div class="card-icon">🔑</div>
                         <h3>Koda Gir</h3>
                         <p>6 haneli kod veya QR kod ile bir odaya katılın</p>
                     </div>
+                </div>
+                <div id="my-streams-section" class="my-streams-section hidden">
+                    <h3 class="section-title">Yayınlarım</h3>
+                    <div id="my-streams-list" class="my-streams-list"></div>
                 </div>
             </div>
 
@@ -107,23 +111,20 @@
                 <div class="stream-options">
                     <div class="stream-option friends-option" data-type="friends" onclick="selectStreamType('friends')">
                         <div class="option-icon">
-                            <svg class="handshake-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M11.14 4L6.43 8.69C5.55 9.57 5.55 11.03 6.43 11.91L8.09 13.57C8.97 14.45 10.43 14.45 11.31 13.57L16 8.88L11.14 4Z" fill="currentColor"/>
-                                <path d="M12.86 4L17.57 8.69C18.45 9.57 18.45 11.03 17.57 11.91L15.91 13.57C15.03 14.45 13.57 14.45 12.69 13.57L8 8.88L12.86 4Z" fill="currentColor"/>
-                                <path d="M9 16L11 18L15 14L13 12L9 16Z" fill="currentColor"/>
-                            </svg>
+                            <img src="/Pictures/Music-friends-class-icon.png" alt="Arkadaşlarınla Yayın Yap" class="friends-icon-img">
                         </div>
                         <h3>Arkadaşlarınla Yayın Yap</h3>
                         <p class="option-description">Arkadaşlarınla oyun oynarken, araba yolculuğunda yada parti yaparken beraber dinleyebileceğiniz hazır ayarlı müzik yayını</p>
                         <button class="start-stream-btn" onclick="event.stopPropagation(); startStream('friends')">Yayına Başla</button>
                     </div>
                     <div class="stream-option business-option" data-type="business" onclick="selectStreamType('business')">
-                        <div class="option-icon">
-                            <svg class="coffee-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 2V8C6 9.1 6.9 10 8 10H13C14.1 10 15 9.1 15 8V2H6Z" fill="currentColor"/>
-                                <path d="M4 10H16C17.1 10 18 10.9 18 12V19C18 20.1 17.1 21 16 21H4C2.9 21 2 20.1 2 19V12C2 10.9 2.9 10 4 10Z" fill="currentColor"/>
-                                <path class="coffee-fill" d="M4 12H16V19H4V12Z" fill="#6F4E37" opacity="0"/>
-                            </svg>
+                        <div class="option-icon coffee-container">
+                            <img src="/Pictures/Music-bussines-class-icon.png" alt="İşletmende Yayın Yap" class="business-icon-img">
+                            <div class="steam-animation">
+                                <div class="steam steam1"></div>
+                                <div class="steam steam2"></div>
+                                <div class="steam steam3"></div>
+                            </div>
                         </div>
                         <h3>İşletmende Yayına Başla</h3>
                         <p class="option-description">Kafeniz, spor salonunuz yada başka sektör işletmeniz için sizin için hazır ayarları ile oluşturulmuş müzik yayını</p>
@@ -150,7 +151,7 @@
                         </div>
                         <h3>Özel Ayarlar</h3>
                         <p class="option-description">Kendi özel ayarlarınızı yaparak müzik yayını oluşturun</p>
-                        <button class="start-stream-btn" onclick="event.stopPropagation(); startStream('custom')">Yayına Başla</button>
+                        <button class="custom-settings-btn" onclick="event.stopPropagation(); startStream('custom')">Yayınını Ayarla</button>
                     </div>
                 </div>
                 <div id="room-created" class="room-info hidden">
@@ -183,7 +184,11 @@
                         <button class="modal-close" onclick="closeStreamNameModal()">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <input type="text" id="stream-name-input" placeholder="Yayın İsmi (Opsiyonel)" class="input" maxlength="50">
+                        <div class="input-wrapper">
+                            <input type="text" id="stream-name-input" placeholder="Yayın İsmi (En az 3 karakter)" class="input" maxlength="50">
+                            <span id="stream-name-error" class="error-icon hidden">⚠️</span>
+                            <p id="stream-name-error-text" class="error-text hidden">Yayın ismi en az 3 karakter olmalıdır</p>
+                        </div>
                         <button id="confirm-stream-btn" class="primary-btn" style="margin-top: 20px; width: 100%;">
                             <span>Yayını Başlat</span>
                         </button>

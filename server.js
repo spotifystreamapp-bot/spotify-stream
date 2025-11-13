@@ -29,6 +29,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/Pictures', express.static(path.join(__dirname, 'Pictures')));
 
 // Render.com ve diğer proxy'ler için trust proxy ayarı
 app.set('trust proxy', 1);

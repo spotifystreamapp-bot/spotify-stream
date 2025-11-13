@@ -159,12 +159,25 @@ function setupEventListeners() {
     // Stream onay butonu
     document.getElementById('confirm-stream-btn')?.addEventListener('click', confirmStream);
     
-    // Stream name input Enter tuşu
-    document.getElementById('stream-name-input')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            confirmStream();
-        }
-    });
+    // Stream name input Enter tuşu ve validasyon
+    const streamNameInput = document.getElementById('stream-name-input');
+    if (streamNameInput) {
+        streamNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmStream();
+            }
+        });
+        
+        // Input değiştiğinde hata durumunu temizle
+        streamNameInput.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            if (value.length >= 3 || value.length === 0) {
+                e.target.classList.remove('error');
+                document.getElementById('stream-name-error').classList.add('hidden');
+                document.getElementById('stream-name-error-text').classList.add('hidden');
+            }
+        });
+    }
 
     // Odaya katıl
     document.getElementById('join-room-btn')?.addEventListener('click', joinRoom);
@@ -327,6 +340,8 @@ function showMainScreen() {
             if (!currentRoom) {
                 console.log('🏠 Home view gösteriliyor');
                 switchView('home');
+                // Yayınlarım listesini yükle
+                updateMyStreams();
             }
         }
     }, 50);
@@ -362,16 +377,24 @@ window.switchView = switchView;
 // Çıkış
 async function logout() {
     try {
-        const response = await fetch('/auth/logout', { method: 'POST' });
+        const response = await fetch('/auth/logout', { 
+            method: 'POST',
+            credentials: 'include'
+        });
         if (response.ok) {
             currentUser = null;
             currentRoom = null;
             userRole = null;
             socket.disconnect();
+            // Login ekranına dön
+            showLoginScreen();
             window.location.href = '/';
         }
     } catch (error) {
         console.error('Çıkış hatası:', error);
+        // Hata olsa bile login ekranına dön
+        showLoginScreen();
+        window.location.href = '/';
     }
 }
 
@@ -448,13 +471,31 @@ function closeStreamNameModal() {
 
 // Stream'i onayla ve oda oluştur
 async function confirmStream() {
-    const streamName = document.getElementById('stream-name-input').value || getDefaultStreamName(selectedStreamType);
+    const streamNameInput = document.getElementById('stream-name-input');
+    const streamName = streamNameInput.value.trim();
+    const errorIcon = document.getElementById('stream-name-error');
+    const errorText = document.getElementById('stream-name-error-text');
+    
+    // Validasyon: En az 3 karakter kontrolü
+    if (streamName.length > 0 && streamName.length < 3) {
+        streamNameInput.classList.add('error');
+        errorIcon.classList.remove('hidden');
+        errorText.classList.remove('hidden');
+        return;
+    }
+    
+    // Hata durumunu temizle
+    streamNameInput.classList.remove('error');
+    errorIcon.classList.add('hidden');
+    errorText.classList.add('hidden');
+    
+    const finalStreamName = streamName || getDefaultStreamName(selectedStreamType);
     
     // Modal'ı kapat
     closeStreamNameModal();
     
     // Oda oluştur
-    await createRoom(streamName);
+    await createRoom(finalStreamName);
 }
 
 // Stream tipine göre varsayılan isim
@@ -492,6 +533,15 @@ async function createRoom(roomName = 'Yeni Oda') {
             // Kullanıcıyı owner olarak işaretle
             userRole = 'owner';
             updateUserRoleBadge('owner');
+            
+            // "Kodla Gir" kartını gizle
+            const joinRoomCard = document.getElementById('join-room-card');
+            if (joinRoomCard) {
+                joinRoomCard.classList.add('hidden');
+            }
+            
+            // Yayınlarım bölümünü göster ve yayını ekle
+            updateMyStreams();
             
             // Oda görünümüne geç
             setTimeout(() => {
@@ -561,13 +611,35 @@ async function joinRoom() {
 }
 
 // Odadan çık
-function leaveRoom() {
+async function leaveRoom() {
     if (currentRoom) {
+        // Odayı kapat (owner ise)
+        if (userRole === 'owner') {
+            try {
+                await fetch(`/api/rooms/${currentRoom}/close`, {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Oda kapatma hatası:', error);
+            }
+        }
+        
         socket.emit('leave-room', { roomId: currentRoom });
         socket.leave(currentRoom);
     }
     currentRoom = null;
-    switchView('create-room');
+    userRole = null;
+    
+    // "Kodla Gir" kartını tekrar göster
+    const joinRoomCard = document.getElementById('join-room-card');
+    if (joinRoomCard) {
+        joinRoomCard.classList.remove('hidden');
+    }
+    
+    // Yayınlarım listesini güncelle
+    updateMyStreams();
+    
+    switchView('home');
     document.getElementById('room-created').classList.add('hidden');
 }
 
@@ -1025,6 +1097,52 @@ window.makeGuest = makeGuest;
 window.allowAlways = allowAlways;
 window.openUserActionsModal = openUserActionsModal;
 window.limitPermissions = limitPermissions;
+
+// Yayınlarım listesini güncelle
+async function updateMyStreams() {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch('/api/rooms/my-rooms', {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const rooms = await response.json();
+            const myStreamsSection = document.getElementById('my-streams-section');
+            const myStreamsList = document.getElementById('my-streams-list');
+            
+            if (rooms.length > 0) {
+                myStreamsSection.classList.remove('hidden');
+                myStreamsList.innerHTML = '';
+                
+                rooms.forEach(room => {
+                    const streamItem = document.createElement('div');
+                    streamItem.className = 'stream-item';
+                    streamItem.onclick = () => {
+                        currentRoom = room.id;
+                        switchView('room');
+                        loadRoomData();
+                    };
+                    streamItem.innerHTML = `
+                        <div class="stream-item-name">${room.name || 'Yayın'}</div>
+                        <div class="stream-item-code">Kod: ${room.code}</div>
+                    `;
+                    myStreamsList.appendChild(streamItem);
+                });
+            } else {
+                myStreamsSection.classList.add('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('Yayınlarım listesi hatası:', error);
+    }
+}
+
+// Sayfa yüklendiğinde yayınlarım listesini yükle
+document.addEventListener('DOMContentLoaded', () => {
+    // checkAuth içinde çağrılacak
+});
 
 // Modal dışına tıklandığında kapat
 document.addEventListener('click', (e) => {
