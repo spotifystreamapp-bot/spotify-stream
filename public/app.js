@@ -392,13 +392,15 @@ async function logout() {
             userRole = null;
             socket.disconnect();
             
-            // Spotify apps sayfasına yönlendir (erişimi kaldırmak için)
-            window.location.href = 'https://www.spotify.com/tr-tr/account/apps/';
+            // Login ekranına dön
+            showLoginScreen();
+            window.location.href = '/';
         }
     } catch (error) {
         console.error('Çıkış hatası:', error);
-        // Hata olsa bile Spotify apps sayfasına yönlendir
-        window.location.href = 'https://www.spotify.com/tr-tr/account/apps/';
+        // Hata olsa bile login ekranına dön
+        showLoginScreen();
+        window.location.href = '/';
     }
 }
 
@@ -548,6 +550,16 @@ async function createRoom(roomName = 'Yeni Oda') {
                 createRoomCard.classList.add('hidden');
             }
             
+            // Sidebar'daki nav item'ları gizle
+            const navCreateRoom = document.getElementById('nav-create-room');
+            const navJoinRoom = document.getElementById('nav-join-room');
+            if (navCreateRoom) {
+                navCreateRoom.classList.add('hidden');
+            }
+            if (navJoinRoom) {
+                navJoinRoom.classList.add('hidden');
+            }
+            
             // Yayınlarım bölümünü göster ve yayını ekle
             updateMyStreams();
             
@@ -646,6 +658,16 @@ async function leaveRoom() {
     }
     if (createRoomCard) {
         createRoomCard.classList.remove('hidden');
+    }
+    
+    // Sidebar'daki nav item'ları tekrar göster
+    const navCreateRoom = document.getElementById('nav-create-room');
+    const navJoinRoom = document.getElementById('nav-join-room');
+    if (navCreateRoom) {
+        navCreateRoom.classList.remove('hidden');
+    }
+    if (navJoinRoom) {
+        navJoinRoom.classList.remove('hidden');
     }
     
     // Yayınlarım listesini güncelle
@@ -1146,6 +1168,16 @@ async function updateMyStreams() {
                         }
                         if (createRoomCard) {
                             createRoomCard.classList.add('hidden');
+                        }
+                        
+                        // Sidebar'daki nav item'ları gizle
+                        const navCreateRoom = document.getElementById('nav-create-room');
+                        const navJoinRoom = document.getElementById('nav-join-room');
+                        if (navCreateRoom) {
+                            navCreateRoom.classList.add('hidden');
+                        }
+                        if (navJoinRoom) {
+                            navJoinRoom.classList.add('hidden');
                         }
                         
                         switchView('room');
